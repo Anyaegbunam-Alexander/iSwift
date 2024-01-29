@@ -1,8 +1,13 @@
 ## Swift
 
-A concept API for a fintech app where customers can transfer and receive payments swiftly ;).
+A concept API for a fintech app/webapp where customers can transfer and receive payments swiftly ;).
 
-What makes Swift standout is that we use phone numbers as  unique identifiers. No need for customers to memorize random digits. They just use the digits they are familiar with, their phone number.
-Therefore, customers can receive and transfer money with just their phone numbers. 
+What makes Swift standout is there is no need for customers to memorize random digits as account numbers. They just use the digits they are familiar with, their phone number.
+Therefore, customers can receive and send money with just their phone numbers. 
+
+Other features includes 
+- Savings feature to help customers save
+- Ability for customers to add a product and different prices for the product
+- Ability to generate a QR code or payment link for a customer to swiftly accept payment or transfer from another customer
 
 Awesome!!
