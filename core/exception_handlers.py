@@ -9,7 +9,7 @@ from rest_framework.views import exception_handler
 from core.exceptions import ApplicationError
 
 
-def swift_exception_handler(exc, ctx):
+def iswift_exception_handler(exc, ctx):
     """
     {
         "message": "Error message",

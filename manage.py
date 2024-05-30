@@ -3,15 +3,15 @@
 import os
 import sys
 
-from swift.settings import base
+from iswift.settings import base
 
 
 def main():
     """Run administrative tasks."""
     if base.DEBUG:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "swift.settings.dev")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iswift.settings.dev")
     else:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "swift.settings.prod")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iswift.settings.prod")
 
     try:
         from django.core.management import execute_from_command_line

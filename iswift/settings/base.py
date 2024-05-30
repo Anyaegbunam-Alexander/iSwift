@@ -35,7 +35,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "swift.urls"
+ROOT_URLCONF = "iswift.urls"
 
 TEMPLATES = [
     {
@@ -53,7 +53,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "swift.wsgi.application"
+WSGI_APPLICATION = "iswift.wsgi.application"
 
 
 # Database
@@ -89,7 +89,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "EXCEPTION_HANDLER": "core.exception_handlers.swift_exception_handler",
+    "EXCEPTION_HANDLER": "core.exception_handlers.iswift_exception_handler",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
     "DEFAULT_PAGINATION_CLASS": "core.pagination.PageNumberPagination",
 }
