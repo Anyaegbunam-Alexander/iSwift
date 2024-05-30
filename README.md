@@ -1,8 +1,8 @@
-## Swift
+## iSwift
 
-A concept API for a fintech app/webapp where customers can transfer and receive payments swiftly ;).
+A concept API for a fintech app/webapp where customers can transfer and receive payments swiftly :).
 
-What makes Swift standout is there is no need for customers to memorize random digits as account numbers. They just use the digits they are familiar with, their phone number.
+What makes iSwift standout is there is no need for customers to memorize random digits as account numbers. They just use the digits they are familiar with, their phone number.
 Therefore, customers can receive and send money with just their phone numbers. 
 
 Other features includes 
