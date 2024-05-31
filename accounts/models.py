@@ -45,6 +45,7 @@ class User(AbstractUser, Model):
     country_code = models.IntegerField(
         validators=[MaxValueValidator(9999), MinValueValidator(0)],
     )
+    has_verified_email = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"

@@ -1,5 +1,10 @@
 from rest_framework import serializers
 
 
-class ResponseSchema(serializers.Serializer):
+class ResponseDictSchema(serializers.Serializer):
     message = serializers.CharField()
+
+
+class VerifyOTPPasswordResetSchema(serializers.Serializer):
+    uid = serializers.UUIDField()
+    token = serializers.CharField()

@@ -10,7 +10,7 @@ from rest_framework.validators import ValidationError
 
 from accounts.models import OTP, User
 from core.otp import send_otp
-from core.validators import phone_regex, country_code_regex
+from core.validators import country_code_regex, otp_regex, phone_regex
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -68,3 +68,62 @@ class SignUpSerializer(serializers.ModelSerializer):
         send_otp(phone_number=validated_data["phone_number"], otp=otp)
         user.save()
         return user
+
+
+class PhoneNumberInputSerializer(serializers.Serializer):
+    """Serializer for phone_number input"""
+
+    phone_number = serializers.CharField(max_length=11, validators=[phone_regex])
+
+
+class OTPInputSerializer(PhoneNumberInputSerializer):
+    """Serializer for otp input"""
+
+    otp = serializers.CharField(validators=[otp_regex])
+
+
+class ConfirmTokenSerializer(serializers.Serializer):
+    uid = serializers.UUIDField()
+    token = serializers.CharField()
+
+    class Meta:
+        fields = ["token", "uid"]
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=80)
+    password = serializers.CharField(
+        min_length=8, write_only=True, style={"input_type": "password"}
+    )
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    password = serializers.CharField(min_length=8, write_only=True)
+    confirm_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirm_password"]:
+            raise ValidationError(
+                {
+                    "password": "Passwords do not match",
+                    "confirm_password": "Passwords do not match",
+                }
+            )
+        return attrs
+
+
+class AuthPasswordResetSerializer(serializers.Serializer):
+    current_password = serializers.CharField(min_length=8, write_only=True)
+    new_password = serializers.CharField(min_length=8, write_only=True)
+    confirm_new_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["new_password"] != attrs["confirm_new_password"]:
+            raise ValidationError(
+                {
+                    "new_password": "Passwords do not match",
+                    "confirm_new_password": "Passwords do not match",
+                }
+            )
+        return attrs
