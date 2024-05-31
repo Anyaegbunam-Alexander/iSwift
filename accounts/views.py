@@ -11,6 +11,7 @@ from accounts.models import User
 from accounts.serializers.input import (
     AuthPasswordResetSerializer,
     ConfirmTokenSerializer,
+    LoginSerializer,
     OTPInputSerializer,
     PasswordResetSerializer,
     PhoneNumberInputSerializer,
@@ -30,6 +31,7 @@ from core.tokens import password_reset_token
 class LoginView(UnauthenticatedOnlyMixin, APIView):
     """Login view"""
 
+    @extend_schema(request=LoginSerializer, responses=UserSerializer)
     def post(self, request: Request) -> Response:
         user = authenticate_user(request)
         AuthToken.objects.filter(user=user).delete()
