@@ -5,7 +5,7 @@ from accounts import views
 app_name = "accounts"
 
 urlpatterns = [
-    path("signup/", views.SignUpView.as_view(), name="sign_up"),
+    path("signup/", views.SignUpView.as_view(), name="signup"),
     path("login/", views.LoginView.as_view(), name="login"),
     path("verify-otp/", views.VerifyOTPView.as_view(), name="verify_otp"),
     path("regenerate-otp/", views.RegenerateOTPViewSignup.as_view(), name="regenerate_otp"),

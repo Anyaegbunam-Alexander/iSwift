@@ -141,10 +141,10 @@ class VerifyOTPPasswordReset(UnauthenticatedOnlyMixin, APIView):
         serializer = self.input_serializer_class(data=data)
         if serializer.is_valid(raise_exception=True):
             verify = OTPVerifier(data=serializer.data, activate_user=False)
-            obj = verify.verify_otp()
-            if obj:
-                token = password_reset_token.make_token(obj.user)
-                data = {"uid": obj.uid, "token": token}
+            user = verify.verify_otp()
+            if user:
+                token = password_reset_token.make_token(user)
+                data = {"uid": user.uid, "token": token}
                 return Response(data, status=status.HTTP_200_OK)
             raise BadRequestException("Unable to verify otp please try again")
 
@@ -158,8 +158,8 @@ class ResetPasswordFromOTP(UnauthenticatedOnlyMixin, APIView):
         confirm_token_serializer = ConfirmTokenSerializer(data=data)
         confirm_token_serializer.is_valid(raise_exception=True)
         token = confirm_token_serializer.validated_data["token"]
-        id = confirm_token_serializer.validated_data["id"]
-        user = get_object_or_404(User, id=id)
+        uid = confirm_token_serializer.validated_data["uid"]
+        user = get_object_or_404(User, uid=uid)
 
         if not password_reset_token.check_token(user, token):
             raise BadRequestException("Invalid or expired token")

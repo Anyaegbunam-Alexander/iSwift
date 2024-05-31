@@ -38,7 +38,7 @@ class User(AbstractUser, Model):
     username = None
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
-    phone_number = phone_number = models.IntegerField(
+    phone_number = models.IntegerField(
         unique=True,
         validators=[MaxValueValidator(99999999999), MinValueValidator(0)],
     )
