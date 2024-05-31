@@ -3,6 +3,7 @@ import random
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.model_abstracts import Model
@@ -35,12 +36,19 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser, Model):
     email = models.EmailField(max_length=80, unique=True)
     username = None
-    first_name = None
-    last_name = None
+    first_name = models.CharField(max_length=80)
+    last_name = models.CharField(max_length=80)
+    phone_number = phone_number = models.IntegerField(
+        unique=True,
+        validators=[MaxValueValidator(99999999999), MinValueValidator(0)],
+    )
+    country_code = models.IntegerField(
+        validators=[MaxValueValidator(9999), MinValueValidator(0)],
+    )
     is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["first_name", "last_name", "phone_number", "country_code"]
 
     objects = CustomUserManager()
 

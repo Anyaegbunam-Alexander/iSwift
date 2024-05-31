@@ -27,7 +27,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "knox",
-    "accounts"
+    "drf_spectacular",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,23 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exception_handlers.iswift_exception_handler",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
     "DEFAULT_PAGINATION_CLASS": "core.pagination.PageNumberPagination",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "iSwift API",
+    "DESCRIPTION": None,
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "oauth2RedirectUrl": "/api-auth/login/",
+    },
+}
+
+
+REST_KNOX = {
+    "AUTH_HEADER_PREFIX": "Bearer",
 }
 
 # Password validation
@@ -125,17 +143,23 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Africa/Lagos"
 
 USE_I18N = True
 
 USE_TZ = True
+
+BASE_URL = env("BASE_URL", default="http://localhost:8000")
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_URL = BASE_URL + "/media/"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -144,4 +168,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # iSwift settings
+
+TESTING = False
+
+# Maximum times to generate OTP before waiting
 MAX_OTP_TRY = 3
+
+# Time each new generated OTP is valid
+OTP_EXPIRY_MINUTES = 15
+
+# Time to wait after maximum tries have been exhausted before new OTP can be generated
+OTP_MAX_OUT_MINUTES = 25

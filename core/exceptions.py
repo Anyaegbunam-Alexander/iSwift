@@ -42,3 +42,9 @@ class NotFoundException(APIException):
             self.detail = f"{self.klass.__name__} with id '{id}' not found"
         else:
             self.detail = f"{self.klass.__name__} not found"
+
+
+class UnauthenticatedOnly(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "User is authenticated."
+    default_code = "unauthenticated_only"
