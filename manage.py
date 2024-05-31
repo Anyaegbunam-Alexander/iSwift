@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
-import os
 import sys
-
-from iswift.settings import base
+import set_django_settings_module  # noqa isort:skip
 
 
 def main():
     """Run administrative tasks."""
-    if base.DEBUG:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iswift.settings.dev")
-    else:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "iswift.settings.prod")
 
     try:
         from django.core.management import execute_from_command_line
