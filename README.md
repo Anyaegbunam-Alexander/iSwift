@@ -1,4 +1,4 @@
-## iswift
+## iSwift
 
 A concept API for a fintech app/webapp where customers can transfer and receive payments swiftly :).
 
@@ -12,3 +12,6 @@ Other features includes
 - Ability to generate a QR code or payment link for a customer to swiftly accept payment or transfer from another customer
 
 Awesome!!
+
+
+[![iSwift API Tests](https://github.com/Anyaegbunam-Alexander/iSwift/actions/workflows/tests.yml/badge.svg)](https://github.com/Anyaegbunam-Alexander/iSwift/actions/workflows/tests.yml)

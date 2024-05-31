@@ -1,4 +1,4 @@
-name: Real Estate API Tests
+name: iSwift API Tests
 
 on:
   push:
