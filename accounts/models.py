@@ -7,6 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.model_abstracts import Model
+from core.model_managers.accounts import NonStaffManager
 
 
 class CustomUserManager(BaseUserManager):
@@ -52,6 +53,7 @@ class User(AbstractUser, Model):
     REQUIRED_FIELDS = ["first_name", "last_name", "phone_number", "country_code"]
 
     objects = CustomUserManager()
+    non_staff = NonStaffManager()
 
     def __str__(self) -> str:
         return self.email
