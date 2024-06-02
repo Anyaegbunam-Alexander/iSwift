@@ -11,6 +11,7 @@ from rest_framework.validators import ValidationError
 from accounts.models import OTP, User
 from core.otp import send_otp
 from core.validators import country_code_regex, otp_regex, phone_regex
+from finance.models import iSwiftAccount
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -65,6 +66,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         user_otp.otp_expiry = otp_expiry
         user_otp.max_otp_try = settings.MAX_OTP_TRY
         user_otp.save()
+        iSwiftAccount.objects.create(user=user)
         send_otp(phone_number=validated_data["phone_number"], otp=otp)
         user.save()
         return user

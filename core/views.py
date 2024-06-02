@@ -1,4 +1,6 @@
+from django.db.models import QuerySet
 from drf_spectacular.utils import extend_schema
+from rest_framework.generics import ListAPIView as DRFListAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,3 +16,7 @@ class CheckStatus(APIView):
     @extend_schema(responses=ResponseDictSchema)
     def get(self, request: Request) -> Response:
         return Response(response_dict(message="iSwift API is up and running"), 200)
+
+
+class ListAPIView(DRFListAPIView):
+    queryset = QuerySet([])
