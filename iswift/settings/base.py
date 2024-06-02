@@ -28,7 +28,9 @@ INSTALLED_APPS = [
     "django_filters",
     "knox",
     "drf_spectacular",
+    "core",
     "accounts",
+    "finance"
 ]
 
 MIDDLEWARE = [
