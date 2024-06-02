@@ -114,6 +114,7 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "oauth2RedirectUrl": "/api-auth/login/",
     },
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
 }
 
 
