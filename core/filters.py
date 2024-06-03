@@ -13,5 +13,5 @@ class UserFilter(df_filters.FilterSet):
 
     def custom_filter(self, queryset: QuerySet, name: str, value: str):
         return queryset.filter(
-            Q(name__icontains=value) | Q(phone_number__icontains=value)
+            Q(first_name__icontains=value) | Q(phone_number__icontains=value)
         ).distinct()

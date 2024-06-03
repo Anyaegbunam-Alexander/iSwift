@@ -12,3 +12,6 @@ class ListUsers(AuthenticatedOnlyMixin, ListAPIView):
     serializer_class = PublicUserSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = UserFilter
+
+
+# class MakeTransfer(AuthenticatedOnlyMixin)

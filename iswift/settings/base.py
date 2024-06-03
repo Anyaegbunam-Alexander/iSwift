@@ -184,3 +184,6 @@ OTP_EXPIRY_MINUTES = 15
 
 # Time to wait after maximum tries have been exhausted before new OTP can be generated
 OTP_MAX_OUT_MINUTES = 25
+
+
+OPEN_EXCHANGE_APP_ID = env("OPEN_EXCHANGE_APP_ID")
