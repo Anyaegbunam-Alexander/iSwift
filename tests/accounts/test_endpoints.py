@@ -11,14 +11,17 @@ from rest_framework.test import APIClient
 
 from core.tokens import password_reset_token
 from tests.data import login_data, user_data
+from finance.data import currencies
 
 pytestmark = pytest.mark.django_db
 
 
 class TestSignup:
     @pytest.mark.auth
-    def test_signup(self, anon_user_api_client: APIClient):
+    def test_signup(self, anon_user_api_client: APIClient, currency_factory):
         endpoint = reverse("accounts:signup")
+        currency = currency_factory(name=currencies["USD"], iso_code="usd")
+        user_data["currency"] = currency.iso_code
         response: Response = anon_user_api_client.post(endpoint, data=user_data)
         assert response.status_code == 201
 
