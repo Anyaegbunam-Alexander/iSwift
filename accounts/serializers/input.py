@@ -11,7 +11,8 @@ from rest_framework.validators import ValidationError
 from accounts.models import OTP, User
 from core.otp import send_otp
 from core.validators import country_code_regex, otp_regex, phone_regex
-from finance.models import iSwiftAccount
+from finance.data import currencies
+from finance.models import Currency, iSwiftAccount
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -22,6 +23,17 @@ class SignUpSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(min_length=8, write_only=True)
     country_code = serializers.IntegerField(validators=[country_code_regex])
     phone_number = serializers.IntegerField(validators=[phone_regex])
+    currency = serializers.ChoiceField(
+        choices=[(key.lower(), value) for key, value in currencies.items()]
+    )
+
+    def validate_currency(self, value):
+        try:
+            currency = Currency.objects.get(iso_code=value)
+            return currency
+
+        except Currency.DoesNotExist:
+            raise ValidationError(f"{value} not in the list of supported currencies")
 
     def validate(self, attrs):
         email_exists = User.objects.filter(email=attrs["email"]).exists()
@@ -51,12 +63,14 @@ class SignUpSerializer(serializers.ModelSerializer):
             "last_name",
             "phone_number",
             "country_code",
+            "currency",
         ]
 
     @transaction.atomic
     def create(self, validated_data):
         validated_data.pop("confirm_password")
         password = validated_data.pop("password")
+        currency: Currency = validated_data.pop("currency")
         otp = random.randint(100000, 999999)
         otp_expiry = timezone.now() + timedelta(minutes=10)
         user = super().create(validated_data)
@@ -66,7 +80,12 @@ class SignUpSerializer(serializers.ModelSerializer):
         user_otp.otp_expiry = otp_expiry
         user_otp.max_otp_try = settings.MAX_OTP_TRY
         user_otp.save()
-        iSwiftAccount.objects.create(user=user)
+        iSwiftAccount.objects.create(
+            user=user,
+            currency=currency,
+            is_default=True,
+            name=f"{(currency.iso_code).upper()} Account",
+        )
         send_otp(phone_number=validated_data["phone_number"], otp=otp)
         user.save()
         return user
