@@ -94,9 +94,10 @@ class iSwiftAccount(Model, ActivatorModel):
         if self == debit_transaction.iswift_account:
             raise SameAccountOperation()
 
-        amount_received = debit_transaction.iswift_account.currency.get_conversion_rate(
-            target=self.currency
-        )[0] * amount
+        amount_received = (
+            debit_transaction.iswift_account.currency.get_conversion_rate(target=self.currency)[0]
+            * amount
+        )
 
         credit = CreditTransaction(
             iswift_account=self,
@@ -113,6 +114,15 @@ class iSwiftAccount(Model, ActivatorModel):
         self.save()
 
         return credit
+
+    @transaction.atomic
+    def set_default(self):
+        # Lock the rows to prevent race conditions
+        accounts = iSwiftAccount.objects.select_for_update().filter(user=self.user)
+        accounts.exclude(pk=self.pk).update(is_default=False)
+        self.is_default = True
+        self.save(update_fields=['is_default'])
+        return self
 
 
 class DebitTransaction(Model):
