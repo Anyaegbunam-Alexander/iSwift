@@ -1,6 +1,8 @@
 from rest_framework import status
 from rest_framework.exceptions import APIException
 
+from core import object_kebab_case
+
 
 class ApplicationError(Exception):
     def __init__(self, message, extra=None):
@@ -38,10 +40,11 @@ class NotFoundException(APIException):
     def __init__(self, Klass, *, verbose=False, id=None):
         self.klass = Klass
         self.status_code = status.HTTP_404_NOT_FOUND
+        name = object_kebab_case(self.klass())
         if verbose and id:
-            self.detail = f"{self.klass.__name__} with id '{id}' not found"
+            self.detail = f"{name} with id '{id}' not found"
         else:
-            self.detail = f"{self.klass.__name__} not found"
+            self.detail = f"{name} not found"
 
 
 class UnauthenticatedOnly(APIException):
