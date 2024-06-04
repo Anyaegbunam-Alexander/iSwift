@@ -3,6 +3,7 @@ from django.db.models import Q
 from django_extensions.db.models import ActivatorModel
 
 from accounts.models import User
+from core.exceptions import SameAccountOperation
 from core.feilds import MoneyField
 from core.model_abstracts import Model
 
@@ -18,7 +19,7 @@ class Currency(Model, ActivatorModel):
         try:
             rate = ConversionRate.objects.get(
                 Q(base_currency=self, target_currency=target)
-                | Q(base_currency=target, target=self)
+                | Q(base_currency=target, target_currency=self)
             )
             # Determine the correct rate based on the order it was saved
             if rate.base_currency == self:
@@ -69,23 +70,33 @@ class iSwiftAccount(Model, ActivatorModel):
             debit.recipient = user
             debit.save()
             iswift_account = user.iswift_accounts.get(is_default=True)
+            if iswift_account == self:
+                raise SameAccountOperation()
+
             iswift_account.record_credit(debit, amount)
+            self.balance -= amount
+            self.save()
             return debit
 
         debit.save()
-        credit_transactions = []
         for re in recipients:
             user = re["recipient"]
             amount = re["amount"]
-            credit_transactions.append(
-                user.iswift_account.record_credit(debit, amount, commit=False)
-            )
+            user.iswift_accounts.get(is_default=True).record_credit(debit, amount)
+            self.balance -= amount
 
-        CreditTransaction.objects.bulk_create(credit_transactions)
+        self.save()
         return debit
 
     @transaction.atomic
-    def record_credit(self, debit_transaction: "DebitTransaction", amount, commit=True):
+    def record_credit(self, debit_transaction: "DebitTransaction", amount):
+
+        if self == debit_transaction.iswift_account:
+            raise SameAccountOperation()
+
+        amount_received = debit_transaction.iswift_account.currency.get_conversion_rate(
+            target=self.currency
+        )[0] * amount
 
         credit = CreditTransaction(
             iswift_account=self,
@@ -95,12 +106,11 @@ class iSwiftAccount(Model, ActivatorModel):
             amount_sent=amount,
             currency_sent=debit_transaction.iswift_account.currency,
             currency_received=self.currency,
-            amount_received=self.currency.get_conversion_rate(
-                target=debit_transaction.iswift_account.currency
-            )[0],
+            amount_received=amount_received,
         )
-        if commit:
-            credit.save()
+        self.balance += amount_received
+        credit.save()
+        self.save()
 
         return credit
 

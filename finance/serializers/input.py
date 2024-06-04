@@ -28,7 +28,7 @@ class MakeTransferSerializer(serializers.Serializer):
             return iSwiftAccount.objects.get(uid=value, user=user)
         except iSwiftAccount.DoesNotExist:
             raise ValidationError("iSwift account does not exist")
-
+        
     def validate_recipients(self, values):
         users = [value["recipient"] for value in values]
         if len(users) != len(set(users)):
