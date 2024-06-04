@@ -1,7 +1,10 @@
+from django.db.models import QuerySet
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from accounts.serializers.output import PublicUserSerializer
+from core import object_kebab_case
+from core.serializers.fields import DecimalField
 from core.serializers.output import ModelBaseSerializer
 from finance.models import CreditTransaction, Currency, DebitTransaction, iSwiftAccount
 
@@ -14,6 +17,7 @@ class CurrencySerializer(ModelBaseSerializer):
 
 class iSwiftAccountSerializer(ModelBaseSerializer):
     currency = CurrencySerializer()
+    balance = DecimalField()
 
     class Meta:
         model = iSwiftAccount
@@ -22,17 +26,19 @@ class iSwiftAccountSerializer(ModelBaseSerializer):
 
 class CreditTransactionSerializer(ModelBaseSerializer):
     currency_sent = CurrencySerializer()
-    user = serializers.SerializerMethodField()
+    amount_sent = DecimalField()
+    sender = PublicUserSerializer()
+    # user = serializers.SerializerMethodField()
 
     class Meta:
         model = CreditTransaction
         fields = [
             "uid",
-            "user",
             "description",
             "sender",
             "amount_sent",
             "currency_sent",
+            # "user",
         ]
 
     @extend_schema_field(PublicUserSerializer)
@@ -44,6 +50,7 @@ class DebitTransactionSerializer(ModelBaseSerializer):
     currency = CurrencySerializer()
     iswift_account = iSwiftAccountSerializer()
     recipients = serializers.SerializerMethodField()
+    amount_sent = DecimalField()
 
     class Meta:
         model = DebitTransaction
@@ -65,6 +72,7 @@ class DebitTransactionSerializer(ModelBaseSerializer):
 class PrivateCreditTransactionSerializer(CreditTransactionSerializer):
     iswift_account = iSwiftAccountSerializer()
     currency_received = CurrencySerializer()
+    amount_received = DecimalField()
 
     class Meta(CreditTransactionSerializer.Meta):
         fields = CreditTransactionSerializer.Meta.fields + [
@@ -74,11 +82,58 @@ class PrivateCreditTransactionSerializer(CreditTransactionSerializer):
         ]
 
 
+class TransactionSerializer(serializers.Serializer):
+    uid = serializers.UUIDField()
+    object = serializers.CharField()
+    amount = DecimalField()
+    currency = CurrencySerializer()
+    description = serializers.CharField(max_length=500)
+    sender_or_recipient = serializers.CharField(max_length=101)
+    iswift_account = serializers.UUIDField()
+
+
 class iSwiftAccountDetailSerializer(iSwiftAccountSerializer):
     transactions = serializers.SerializerMethodField()
 
     class Meta(iSwiftAccountSerializer.Meta):
         fields = iSwiftAccountSerializer.Meta.fields + ["transactions"]
 
+    @extend_schema_field(TransactionSerializer(many=True))
     def get_transactions(self, obj):
-        return None
+        credit_transactions: QuerySet[CreditTransaction] = obj.credit_transactions.select_related(
+            "currency_received", "sender"
+        ).all()
+        debit_transactions: QuerySet[DebitTransaction] = obj.debit_transactions.select_related(
+            "currency", "recipient"
+        ).all()
+
+        credit_object = object_kebab_case(CreditTransaction())
+        debit_object = object_kebab_case(DebitTransaction())
+
+        all_transactions = [
+            {
+                "iswift_account": credit.iswift_account.uid,
+                "amount": credit.amount_received,
+                "uid": credit.uid,
+                "object": credit_object,
+                "currency": CurrencySerializer(credit.currency_received).data,
+                "sender_or_recipient": credit.sender.get_full_name(),
+                "description": credit.description,
+            }
+            for credit in credit_transactions
+        ] + [
+            {
+                "iswift_account": debit.iswift_account.uid,
+                "uid": debit.uid,
+                "object": debit_object,
+                "currency": CurrencySerializer(debit.currency).data,
+                "sender_or_recipient": (
+                    debit.recipient.get_full_name() if debit.recipient else "Bulk Transfer"
+                ),
+                "amount": debit.amount_sent,
+                "description": debit.description,
+            }
+            for debit in debit_transactions
+        ]
+
+        return TransactionSerializer(all_transactions, many=True).data
