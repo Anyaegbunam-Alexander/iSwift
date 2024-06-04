@@ -1,11 +1,14 @@
 from rest_framework import serializers
 
+from core import object_kebab_case
+
 
 class ModelBaseSerializer(serializers.ModelSerializer):
-    """Base serializer for all serializers.\n
-    This will add the `object` field which is the class name of the
-    object being serialized.
-    """
+    # Base serializer for all serializers.\n
+    # This will add the `object` field which is the class name of the
+    # object being serialized.
+    # It also sorts the fields with uid and object as the first two
+    # fields and the rest in alphabetical order
 
     class Meta:
         fields = ["object"]
@@ -28,4 +31,4 @@ class ModelBaseSerializer(serializers.ModelSerializer):
             pass
 
     def get_object(self, obj) -> str:
-        return obj.__class__.__name__.lower()
+        return object_kebab_case(obj)
