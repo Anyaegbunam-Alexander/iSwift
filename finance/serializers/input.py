@@ -1,18 +1,15 @@
-from decimal import Decimal
-
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from accounts.models import User
+from core.serializers.fields import DecimalField
 from finance.data import currencies
 from finance.models import Currency, iSwiftAccount
 
 
 class RecipientInputSerializer(serializers.Serializer):
     recipient = serializers.UUIDField()
-    amount = serializers.DecimalField(
-        decimal_places=2, max_digits=10, min_value=Decimal(1.00), max_value=Decimal(10_000_000.00)
-    )
+    amount = DecimalField()
 
 
 class MakeTransferSerializer(serializers.Serializer):
@@ -28,7 +25,7 @@ class MakeTransferSerializer(serializers.Serializer):
             return iSwiftAccount.objects.get(uid=value, user=user)
         except iSwiftAccount.DoesNotExist:
             raise ValidationError("iSwift account does not exist")
-        
+
     def validate_recipients(self, values):
         users = [value["recipient"] for value in values]
         if len(users) != len(set(users)):
@@ -42,7 +39,11 @@ class MakeTransferSerializer(serializers.Serializer):
                 validated_users.append(value)
 
             except User.DoesNotExist:
-                raise ValidationError(f"User with {value["recipient"]} is not valid")
+                # why did I declare the variable?
+                # Because Black Formatter was having issues formatting
+                # this: {value["recipient"]}
+                rec = value["recipient"]
+                raise ValidationError(f"User with {rec} is not valid")
 
         return validated_users
 
@@ -88,15 +89,42 @@ class CreateAccountSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context["user"]
-        validated_data['user'] = user
+        validated_data["user"] = user
+        is_default = validated_data.pop("is_default", False)
 
-        if 'name' not in validated_data:
-            validated_data['name'] = f"{validated_data['currency'].iso_code.upper()} Account"
+        if "name" not in validated_data:
+            validated_data["name"] = f"{validated_data['currency'].iso_code.upper()} Account"
 
-        if validated_data["is_default"]:
-            accounts = iSwiftAccount.objects.filter(user=user)
-            for acc in accounts:
-                acc.is_default = False
-                acc.save()
+        instance: iSwiftAccount = super().create(validated_data)
 
-        return super().create(validated_data)
+        if is_default:
+            instance.set_default()
+
+        return instance
+
+
+class iSwiftAccountUpdateSerializer(serializers.ModelSerializer):
+    is_default = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = iSwiftAccount
+        fields = ["name", "is_default"]
+
+    def update(self, instance: iSwiftAccount, validated_data):
+        is_default = validated_data.pop("is_default", None)
+
+        if is_default is not None:
+            if is_default:
+                instance = instance.set_default()
+            else:
+                # Check if another account is set as default
+                if (
+                    not iSwiftAccount.objects.filter(user=instance.user, is_default=True)
+                    .exclude(pk=instance.pk)
+                    .exists()
+                ):
+                    raise ValidationError(
+                        "Another account must be set as default before unsetting this account."
+                    )
+
+        return super().update(instance, validated_data)
