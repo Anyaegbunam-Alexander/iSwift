@@ -1,4 +1,3 @@
-
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -54,6 +53,7 @@ class DebitTransactionSerializer(ModelBaseSerializer):
             "description",
             "currency",
             "recipients",
+            "amount_sent",
         ]
 
     @extend_schema_field(CreditTransactionSerializer(many=True))
@@ -72,3 +72,13 @@ class PrivateCreditTransactionSerializer(CreditTransactionSerializer):
             "amount_received",
             "currency_received",
         ]
+
+
+class iSwiftAccountDetailSerializer(iSwiftAccountSerializer):
+    transactions = serializers.SerializerMethodField()
+
+    class Meta(iSwiftAccountSerializer.Meta):
+        fields = iSwiftAccountSerializer.Meta.fields + ["transactions"]
+
+    def get_transactions(self, obj):
+        return None
