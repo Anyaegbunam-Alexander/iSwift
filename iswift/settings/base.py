@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -30,7 +31,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "core",
     "accounts",
-    "finance"
+    "finance",
 ]
 
 MIDDLEWARE = [
@@ -43,7 +44,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.AllowAllUsersModelBackend']
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
 
 ROOT_URLCONF = "iswift.urls"
 
@@ -116,12 +117,14 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "oauth2RedirectUrl": "/api-auth/login/",
     },
-    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
 }
 
 
 REST_KNOX = {
     "AUTH_HEADER_PREFIX": "Bearer",
+    "TOKEN_TTL": timedelta(hours=72),
+    "AUTO_REFRESH": True,
 }
 
 # Password validation
