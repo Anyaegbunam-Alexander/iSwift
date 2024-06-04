@@ -2,12 +2,14 @@ from django.contrib.auth import authenticate, login, logout
 from drf_spectacular.utils import extend_schema
 from knox.models import AuthToken
 from rest_framework import status
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
+from accounts.schema import VerifyOTPPasswordResetSchema
 from accounts.serializers.input import (
     AuthPasswordResetSerializer,
     ConfirmTokenSerializer,
@@ -24,19 +26,21 @@ from core.helpers import get_object_or_404, response_dict
 from core.mixins import AuthenticatedOnlyMixin, UnauthenticatedOnlyMixin
 from core.otp import OTPGenerator, OTPVerifier
 from core.permission_classes import IsUnauthenticated
-from core.schema import ResponseDictSchema, VerifyOTPPasswordResetSchema
+from core.schema import ResponseDictSchema
 from core.tokens import password_reset_token
 
 
 class LoginView(UnauthenticatedOnlyMixin, APIView):
     """Login view"""
 
-    @extend_schema(request=LoginSerializer, responses=UserSerializer)
+    serializer_class = UserSerializer
+
+    @extend_schema(request=LoginSerializer, responses=serializer_class)
     def post(self, request: Request) -> Response:
         user = authenticate_user(request)
         AuthToken.objects.filter(user=user).delete()
         login(request, user)
-        serializer = UserSerializer(user)
+        serializer = self.serializer_class(user)
         response_data = serializer.data
         token = AuthToken.objects.create(user)
         response_data["authentication"] = {
@@ -48,6 +52,16 @@ class LoginView(UnauthenticatedOnlyMixin, APIView):
             response_data,
             status=status.HTTP_200_OK,
         )
+
+    def get(self, request: Request) -> Response:
+        """Get the details of the logged in user.
+        This method requires authentication
+        """
+        if not self.request.user.is_authenticated:
+            raise NotAuthenticated()
+
+        serializer = self.serializer_class(request.user)
+        return Response(serializer.data, status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
