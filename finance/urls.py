@@ -6,9 +6,13 @@ app_name = "finance"
 
 urlpatterns = [
     path("users/", views.UsersListView.as_view(), name="list_users"),
-    path("currencies/", views.CurrenciesListView.as_view(), name="currencies"),
+    path("currencies/", views.CurrenciesListView.as_view(), name="list_currencies"),
     path("transfer/", views.MakeTransferView.as_view(), name="transfer"),
-    path("iswift-accounts/", views.iSwiftAccountsListCreateView.as_view(), name="iswift_accounts"),
+    path(
+        "iswift-accounts/",
+        views.iSwiftAccountsListCreateView.as_view(),
+        name="list_iswift_accounts",
+    ),
     path(
         "iswift-accounts/<uuid:uid>/",
         views.iSwiftAccountDetailView.as_view(),
