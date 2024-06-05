@@ -1,6 +1,7 @@
 import secrets
 from copy import deepcopy
 from datetime import timedelta
+from random import choice
 
 import pytest
 from django.conf import settings
@@ -13,16 +14,16 @@ from core.tokens import password_reset_token
 from finance.data import currencies
 from finance.models import iSwiftAccount
 from tests.data import login_data, user_data
+from tests.fixtures.finance import CurrencyFixtures
 
 pytestmark = pytest.mark.django_db
 
 
-class TestSignup:
+class TestSignup(CurrencyFixtures):
     @pytest.mark.auth
-    def test_signup(self, anon_client: APIClient, currency_factory):
+    def test_signup(self, anon_client: APIClient):
         endpoint = reverse("accounts:signup")
-        currency = currency_factory(name=currencies["USD"], iso_code="usd")
-        user_data["currency"] = currency.iso_code
+        user_data["currency"] = choice([i for i in currencies])
         response: Response = anon_client.post(endpoint, data=user_data)
         assert response.status_code == 201
         assert iSwiftAccount.objects.filter(is_default=True).exists()
