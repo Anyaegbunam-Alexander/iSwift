@@ -10,57 +10,59 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from core.tokens import password_reset_token
-from tests.data import login_data, user_data
 from finance.data import currencies
+from finance.models import iSwiftAccount
+from tests.data import login_data, user_data
 
 pytestmark = pytest.mark.django_db
 
 
 class TestSignup:
     @pytest.mark.auth
-    def test_signup(self, anon_user_api_client: APIClient, currency_factory):
+    def test_signup(self, anon_client: APIClient, currency_factory):
         endpoint = reverse("accounts:signup")
         currency = currency_factory(name=currencies["USD"], iso_code="usd")
         user_data["currency"] = currency.iso_code
-        response: Response = anon_user_api_client.post(endpoint, data=user_data)
+        response: Response = anon_client.post(endpoint, data=user_data)
         assert response.status_code == 201
+        assert iSwiftAccount.objects.filter(is_default=True).exists()
 
 
 class TestLoginEndpoint:
     data = login_data
 
     @pytest.mark.auth
-    def test_login(self, anon_user_api_client: APIClient, user_factory):
+    def test_login(self, anon_client: APIClient, user_factory):
         user = user_factory()
         data = self.data.copy()
         data["email"] = user.email
-        response: Response = anon_user_api_client.post(reverse("accounts:login"), data=data)
+        response: Response = anon_client.post(reverse("accounts:login"), data=data)
         assert response.status_code == 200
 
-    def test_login_failed_inactive_user(self, anon_user_api_client: APIClient, user_factory):
+    def test_login_failed_inactive_user(self, anon_client: APIClient, user_factory):
         user = user_factory()
         user.is_active = False
         user.save()
         data = self.data.copy()
         data["email"] = user.email
-        response: Response = anon_user_api_client.post(reverse("accounts:login"), data=data)
+        response: Response = anon_client.post(reverse("accounts:login"), data=data)
         assert response.status_code == 401
         assert response.content == b'{"message":"Please verify your phone number","extra":{}}'
 
     @pytest.mark.auth
-    def test_login_failed_invalid_email(self, anon_user_api_client: APIClient, user_factory):
+    def test_login_failed_invalid_email(self, anon_client: APIClient, user_factory):
         data = self.data.copy()
         data["email"] = "invalid@test.com"
-        response: Response = anon_user_api_client.post(reverse("accounts:login"), data=data)
+        response: Response = anon_client.post(reverse("accounts:login"), data=data)
         assert response.status_code == 401
 
     @pytest.mark.auth
-    def test_login_failed_invalid_password(self, anon_user_api_client: APIClient, user_factory):
+    def test_login_failed_invalid_password(self, anon_client: APIClient, user_factory):
         user = user_factory()
         data = self.data.copy()
         data["email"] = user.email
         data["password"] = "invalid_password"
-        response: Response = anon_user_api_client.post(reverse("accounts:login"), data=data)
+        response: Response = anon_client.post(reverse("accounts:login"), data=data)
         assert response.status_code == 401
 
     class TestVerifyOTPEndpoint:
@@ -69,7 +71,7 @@ class TestLoginEndpoint:
         @pytest.mark.auth
         def test_verify_otp_success(
             self,
-            anon_user_api_client: APIClient,
+            anon_client: APIClient,
             otp_factory,
             user_factory,
         ):
@@ -80,7 +82,7 @@ class TestLoginEndpoint:
             user.save()
             data = self.otp.copy()
             data["phone_number"] = phone_number
-            response: Response = anon_user_api_client.post(
+            response: Response = anon_client.post(
                 reverse("accounts:verify_otp"),
                 data=data,
             )
@@ -89,7 +91,7 @@ class TestLoginEndpoint:
         @pytest.mark.auth
         def test_verify_otp_fail_expired_otp(
             self,
-            anon_user_api_client: APIClient,
+            anon_client: APIClient,
             otp_factory,
             user_factory,
         ):
@@ -103,7 +105,7 @@ class TestLoginEndpoint:
             user.save()
             data = self.otp.copy()
             data["phone_number"] = phone_number
-            response: Response = anon_user_api_client.post(
+            response: Response = anon_client.post(
                 reverse("accounts:verify_otp"),
                 data=data,
             )
@@ -111,14 +113,14 @@ class TestLoginEndpoint:
 
         @pytest.mark.auth
         def test_verify_otp_fail_active_user(
-            self, anon_user_api_client: APIClient, otp_factory, user_factory
+            self, anon_client: APIClient, otp_factory, user_factory
         ):
             user = user_factory()
             phone_number = user.phone_number
             otp_factory(user=user)
             data = self.otp.copy()
             data["phone_number"] = phone_number
-            response: Response = anon_user_api_client.post(
+            response: Response = anon_client.post(
                 reverse("accounts:verify_otp"),
                 data=data,
             )
@@ -126,7 +128,7 @@ class TestLoginEndpoint:
 
         @pytest.mark.auth
         def test_verify_otp_fail_wrong_otp(
-            self, anon_user_api_client: APIClient, otp_factory, user_factory
+            self, anon_client: APIClient, otp_factory, user_factory
         ):
             user = user_factory()
             phone_number = user.phone_number
@@ -134,7 +136,7 @@ class TestLoginEndpoint:
             data = self.otp.copy()
             data["phone_number"] = phone_number
             data["otp"] = 432177
-            response: Response = anon_user_api_client.post(
+            response: Response = anon_client.post(
                 reverse("accounts:verify_otp"),
                 data=data,
             )
@@ -143,9 +145,9 @@ class TestLoginEndpoint:
         @pytest.mark.auth
         def test_verify_otp_fail_no_phone_number(
             self,
-            anon_user_api_client: APIClient,
+            anon_client: APIClient,
         ):
-            response: Response = anon_user_api_client.post(
+            response: Response = anon_client.post(
                 reverse("accounts:verify_otp"),
                 data=self.otp,
             )
@@ -156,7 +158,7 @@ class TestRegrateOTPEndpoint:
     @pytest.mark.auth
     def test_regenerate_otp_success(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         otp_factory,
         user_factory,
     ):
@@ -165,7 +167,7 @@ class TestRegrateOTPEndpoint:
         user.save()
         otp_factory(user=user)
         phone_number = user.phone_number
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:regenerate_otp"), data={"phone_number": phone_number}
         )
         assert response.status_code == 200
@@ -173,14 +175,14 @@ class TestRegrateOTPEndpoint:
     @pytest.mark.auth
     def test_regenerate_otp_fail_active_user(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         user_factory,
         otp_factory,
     ):
         user = user_factory()
         otp_factory(user=user)
         phone_number = user.phone_number
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:regenerate_otp"), data={"phone_number": phone_number}
         )
         assert response.status_code == 403
@@ -188,7 +190,7 @@ class TestRegrateOTPEndpoint:
     @pytest.mark.auth
     def test_regenerate_otp_fail_max_try_reached(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         otp_factory,
         user_factory,
     ):
@@ -197,7 +199,7 @@ class TestRegrateOTPEndpoint:
         user.save()
         otp_factory(user=user, max_otp_try=0, otp_max_out=timezone.now() + timedelta(minutes=20))
         phone_number = user.phone_number
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:regenerate_otp"), data={"phone_number": phone_number}
         )
         assert response.status_code == 400
@@ -207,14 +209,14 @@ class TestGenerateOTPPasswordReset:
     @pytest.mark.auth
     def test_otp_generation_success(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         otp_factory,
         user_factory,
     ):
         user = user_factory()
         otp_factory(user=user)
         phone_number = user.phone_number
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:password_reset_get_otp"), data={"phone_number": phone_number}
         )
         assert response.status_code == 200
@@ -222,13 +224,13 @@ class TestGenerateOTPPasswordReset:
     @pytest.mark.auth
     def test_otp_generation_fail_no_phone_number(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         otp_factory,
         user_factory,
     ):
         user = user_factory()
         otp_factory(user=user)
-        response: Response = anon_user_api_client.post(reverse("accounts:password_reset_get_otp"))
+        response: Response = anon_client.post(reverse("accounts:password_reset_get_otp"))
         assert response.status_code == 400
 
 
@@ -238,7 +240,7 @@ class TestOTPVerification:
     @pytest.mark.auth
     def test_verification_success(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         otp_factory,
         user_factory,
     ):
@@ -249,7 +251,7 @@ class TestOTPVerification:
         user.save()
         data = self.otp.copy()
         data["phone_number"] = phone_number
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:password_reset_verify_otp"),
             data=data,
         )
@@ -260,7 +262,7 @@ class TestTokenVerification:
     @pytest.mark.auth
     def test_verification_success(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         user_factory,
     ):
         user = user_factory()
@@ -271,7 +273,7 @@ class TestTokenVerification:
             "password": "password",
             "confirm_password": "password",
         }
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:reset_password_from_otp"), data=data
         )
         assert response.status_code == 200
@@ -279,7 +281,7 @@ class TestTokenVerification:
     @pytest.mark.auth
     def test_verification_fail_no_password(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         user_factory,
     ):
         user = user_factory()
@@ -288,7 +290,7 @@ class TestTokenVerification:
             "uid": user.uid,
             "token": token,
         }
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:reset_password_from_otp"), data=data
         )
         assert response.status_code == 400
@@ -296,7 +298,7 @@ class TestTokenVerification:
     @pytest.mark.auth
     def test_verification_fail_wrong_user_token(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         user_factory,
     ):
         user = user_factory()
@@ -308,7 +310,7 @@ class TestTokenVerification:
             "password": "password",
             "confirm_password": "password",
         }
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:reset_password_from_otp"), data=data
         )
         assert response.status_code == 400
@@ -316,7 +318,7 @@ class TestTokenVerification:
     @pytest.mark.auth
     def test_verification_fail_invalid_token(
         self,
-        anon_user_api_client: APIClient,
+        anon_client: APIClient,
         user_factory,
     ):
         user = user_factory()
@@ -327,7 +329,7 @@ class TestTokenVerification:
             "password": "password",
             "confirm_password": "password",
         }
-        response: Response = anon_user_api_client.post(
+        response: Response = anon_client.post(
             reverse("accounts:reset_password_from_otp"), data=data
         )
         assert response.status_code == 400
@@ -341,26 +343,20 @@ class TestPasswordReset:
     }
 
     @pytest.mark.auth
-    def test_auth_user_password_reset_successful(self, auth_user_api_client):
-        response: Response = auth_user_api_client.post(
-            reverse("accounts:password_reset"), data=self.data
-        )
+    def test_auth_user_password_reset_successful(self, auth_client):
+        response: Response = auth_client.post(reverse("accounts:password_reset"), data=self.data)
         assert response.status_code == 200
 
     @pytest.mark.auth
-    def test_auth_user_password_reset_fail_wrong_password(self, auth_user_api_client):
+    def test_auth_user_password_reset_fail_wrong_password(self, auth_client):
         data = deepcopy(self.data)
         data["current_password"] = "wrong_password"
-        response: Response = auth_user_api_client.post(
-            reverse("accounts:password_reset"), data=data
-        )
+        response: Response = auth_client.post(reverse("accounts:password_reset"), data=data)
         assert response.status_code == 400
 
     @pytest.mark.auth
-    def test_auth_user_password_reset_fail_passwords_do_not_match(self, auth_user_api_client):
+    def test_auth_user_password_reset_fail_passwords_do_not_match(self, auth_client):
         data = deepcopy(self.data)
         data["confirm_new_password"] = "wrong_password"
-        response: Response = auth_user_api_client.post(
-            reverse("accounts:password_reset"), data=data
-        )
+        response: Response = auth_client.post(reverse("accounts:password_reset"), data=data)
         assert response.status_code == 400
