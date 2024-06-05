@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models, transaction
 from django.db.models import Q
 from django_extensions.db.models import ActivatorModel
@@ -16,6 +18,10 @@ class Currency(Model, ActivatorModel):
         return self.iso_code
 
     def get_conversion_rate(self, target: "Currency"):
+        if self == target:
+            # incase trying to convert from eg. usd to usd
+            return Decimal(1), self
+
         try:
             rate = ConversionRate.objects.get(
                 Q(base_currency=self, target_currency=target)
@@ -121,7 +127,7 @@ class iSwiftAccount(Model, ActivatorModel):
         accounts = iSwiftAccount.objects.select_for_update().filter(user=self.user)
         accounts.exclude(pk=self.pk).update(is_default=False)
         self.is_default = True
-        self.save(update_fields=['is_default'])
+        self.save(update_fields=["is_default"])
         return self
 
 
