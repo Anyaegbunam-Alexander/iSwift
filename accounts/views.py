@@ -19,7 +19,7 @@ from accounts.serializers.input import (
     PhoneNumberInputSerializer,
     SignUpSerializer,
 )
-from accounts.serializers.output import UserSerializer
+from accounts.serializers.output import UserLoginSerializer, UserSerializer
 from core.authenticator import authenticate_user
 from core.exceptions import BadRequestException
 from core.helpers import get_object_or_404, response_dict
@@ -35,7 +35,7 @@ class LoginView(UnauthenticatedOnlyMixin, APIView):
 
     serializer_class = UserSerializer
 
-    @extend_schema(request=LoginSerializer, responses=serializer_class)
+    @extend_schema(request=LoginSerializer, responses=UserLoginSerializer)
     def post(self, request: Request) -> Response:
         user = authenticate_user(request)
         AuthToken.objects.filter(user=user).delete()
@@ -44,7 +44,7 @@ class LoginView(UnauthenticatedOnlyMixin, APIView):
         response_data = serializer.data
         token = AuthToken.objects.create(user)
         response_data["authentication"] = {
-            "object": "Token",
+            "object": "token",
             "expiry": token[0].expiry,
             "token": token[1],
         }

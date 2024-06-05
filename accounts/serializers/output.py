@@ -1,4 +1,5 @@
 from accounts.models import User
+from accounts.schema import KnoxTokenSchema
 from core.serializers.output import ModelBaseSerializer
 
 
@@ -26,3 +27,10 @@ class PublicUserSerializer(ModelBaseSerializer):
             "last_name",
             "phone_number",
         ]
+
+
+class UserLoginSerializer(UserSerializer):
+    authentication = KnoxTokenSchema()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ["authentication"]

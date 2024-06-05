@@ -57,9 +57,16 @@ class MakeTransferSerializer(serializers.Serializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
+        description = validated_data.get("description", None)
         iswift_account = validated_data["iswift_account"]
         recipients = validated_data["recipients"]
-        description = validated_data["description"]
+        if description is None:
+            if len(recipients) == 1:
+                # defined the name var explicitly for black formatter to work
+                name = recipients[0]["recipient"].get_full_name()
+                description = f"Transfer to {name}"
+            else:
+                description = "Bulk Transfer"
 
         debit: str = iswift_account.record_transfer(recipients, description)
         return debit
