@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from accounts.models import User
+from core.exceptions import NotFoundException
 from core.serializers.fields import DecimalField
 from finance.data import currencies
 from finance.models import Currency, iSwiftAccount
@@ -24,7 +25,7 @@ class MakeTransferSerializer(serializers.Serializer):
         try:
             return iSwiftAccount.objects.get(uid=value, user=user)
         except iSwiftAccount.DoesNotExist:
-            raise ValidationError("iSwift account does not exist")
+            raise NotFoundException(iSwiftAccount)
 
     def validate_recipients(self, values):
         users = [value["recipient"] for value in values]
