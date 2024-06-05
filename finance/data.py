@@ -1,7 +1,7 @@
 currencies = {
-    "USD": "United States Dollar",
-    "CAD": "Canadian Dollar",
-    "GBP": "British Pound Sterling",
-    "NGN": "Nigerian Naira",
-    "EUR": "Euro",
+    "usd": "United States Dollar",
+    "cad": "Canadian Dollar",
+    "gbp": "British Pound Sterling",
+    "ngn": "Nigerian Naira",
+    "eur": "Euro",
 }
