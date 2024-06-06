@@ -1,3 +1,4 @@
+from decimal import Decimal
 import factory
 from factory.django import DjangoModelFactory
 from faker import Faker
@@ -32,7 +33,7 @@ class iSwiftAccountFactory(DjangoModelFactory):
     name = fake.words(nb=4, unique=True)
     currency = factory.Iterator(Currency.objects.all())
     is_default = True
-    balance = factory.LazyAttribute(lambda _: fake.numerify("99###.##"))
+    balance = factory.LazyAttribute(lambda _: Decimal(fake.numerify("99###.##")))
 
     class Meta:
         model = iSwiftAccount
