@@ -57,3 +57,9 @@ class SameAccountOperation(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = "Cannot perform debit-credit operation on the same account"
     default_code = "Same Account Operation"
+
+
+class InsufficientFunds(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Insufficient funds in selected account for transaction"
+    default_code = "Insufficient Funds"
