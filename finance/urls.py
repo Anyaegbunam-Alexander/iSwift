@@ -11,7 +11,7 @@ urlpatterns = [
     path(
         "iswift-accounts/",
         views.iSwiftAccountsListCreateView.as_view(),
-        name="list_iswift_accounts",
+        name="iswift_accounts",
     ),
     path(
         "iswift-accounts/<uuid:uid>/",
