@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
 from accounts.models import OTP, User
-from core.exceptions import BadRequestException, NotFoundException
+from core.exceptions import BadRequest, NotFound
 from core.helpers import response_dict
 
 
@@ -69,7 +69,7 @@ class OTPGenerator:
         # Get the user instance associated with the phone number
         user = User.objects.filter(phone_number=phone_number).first()
         if not user:
-            raise NotFoundException(User)
+            raise NotFound(User)
         # If activate_user is True and the user is already active, raise an exception
         if self.activate_user and user.is_active:
             raise PermissionDenied("Not Allowed")
@@ -77,12 +77,12 @@ class OTPGenerator:
         # Get the user's OTP information from the database
         user_otp = OTP.objects.filter(user=user).first()
         if not user_otp:
-            raise NotFoundException(User)
+            raise NotFound(User)
 
         # If the user has reached the maximum number of OTP tries, raise an exception
         if not self._can_generate_otp(user_otp):
             message = f"Max OTP try reached. Try again after {self.max_out_minutes} minutes"
-            raise BadRequestException(message, status_code=status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(message, status_code=status.HTTP_400_BAD_REQUEST)
 
         # Generate a new OTP
         otp = OTP.generate_otp()
@@ -179,25 +179,25 @@ class OTPVerifier:
 
         # If no matching OTP is found, raise an exception
         if not user_otp:
-            raise BadRequestException(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
 
         # Get the user instance associated with the phone number
         user = User.objects.filter(phone_number=phone_number).first()
 
         if not user:
-            raise BadRequestException(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
 
         # If the user and user_otp.user instances do not match, raise an exception
         if user != user_otp.user:
-            raise BadRequestException(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
 
         # If activate_user is True and the user is already active, raise an exception
         if self.activate_user and user.is_active:
-            raise BadRequestException(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
 
         # If the OTP is not valid, raise an exception
         if not self._is_valid_otp(user_otp):
-            raise BadRequestException(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
+            raise BadRequest(self.invalid_otp_message, status.HTTP_400_BAD_REQUEST)
 
         # Update the user's OTP information in the database
         self._update_user_otp(user_otp)

@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from accounts.models import User
 from accounts.serializers.output import PublicUserSerializer
-from core.exceptions import BadRequestException
+from core.exceptions import BadRequest
 from core.filters import UserFilter
 from core.helpers import get_object_or_404
 from core.mixins import AuthenticatedOnlyMixin
@@ -140,7 +140,7 @@ class TransactionDetail(AuthenticatedOnlyMixin, APIView):
         """This endpoint returns details of
         a credit or debit transaction based on the type provided."""
         if type not in self.types:
-            raise BadRequestException(f"type not part of {self.types}")
+            raise BadRequest(f"type not part of {self.types}")
 
         if type == self.types[0]:
             Klass = CreditTransaction

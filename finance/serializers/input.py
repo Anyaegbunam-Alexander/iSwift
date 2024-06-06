@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from accounts.models import User
-from core.exceptions import NotFoundException
+from core.exceptions import InsufficientFunds, NotFound
 from core.serializers.fields import DecimalField
 from finance.data import currencies
 from finance.models import Currency, iSwiftAccount
@@ -25,7 +25,7 @@ class MakeTransferSerializer(serializers.Serializer):
         try:
             return iSwiftAccount.objects.get(uid=value, user=user)
         except iSwiftAccount.DoesNotExist:
-            raise NotFoundException(iSwiftAccount)
+            raise NotFound(iSwiftAccount)
 
     def validate_recipients(self, values):
         users = [value["recipient"] for value in values]
@@ -53,7 +53,7 @@ class MakeTransferSerializer(serializers.Serializer):
         recipients = attrs["recipients"]
         total_amount = sum(re["amount"] for re in recipients)
         if iswift_account.balance < total_amount:
-            raise ValidationError("Insufficient funds in selected account for transaction")
+            raise InsufficientFunds()
 
         return super().validate(attrs)
 

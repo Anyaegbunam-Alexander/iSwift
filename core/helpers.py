@@ -3,7 +3,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404 as g_404
 from django.utils import timezone
 
-from core.exceptions import NotFoundException
+from core.exceptions import NotFound
 
 
 def response_dict(message: str, data: dict = None) -> dict:
@@ -29,6 +29,6 @@ def get_object_or_404(Klass, verbose=False, *args, **kwargs):
             Klass = Klass.model
 
         if verbose:
-            raise NotFoundException(Klass=Klass, verbose=True, id=kwargs.get("id"))
+            raise NotFound(Klass=Klass, verbose=True, id=kwargs.get("id"))
         else:
-            raise NotFoundException(Klass=Klass)
+            raise NotFound(Klass=Klass)

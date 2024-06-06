@@ -20,13 +20,13 @@ class BaseCustomAPIException(APIException):
             self.status_code = status_code
 
 
-class BadRequestException(BaseCustomAPIException):
+class BadRequest(BaseCustomAPIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "Bad request"
     default_code = "invalid"
 
 
-class UnauthorizedException(BaseCustomAPIException):
+class Unauthorized(BaseCustomAPIException):
     status_code = status.HTTP_401_UNAUTHORIZED
     default_detail = "Unauthorized"
     default_code = "unauthorized"
@@ -36,7 +36,7 @@ class ConversionError(Exception):
     pass
 
 
-class NotFoundException(APIException):
+class NotFound(APIException):
     def __init__(self, Klass, *, verbose=False, id=None):
         self.klass = Klass
         self.status_code = status.HTTP_404_NOT_FOUND
