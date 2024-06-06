@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from accounts.models import User
-from finance.models import Currency
+from finance.models import Currency, iSwiftAccount
 from tests.fixtures.finance import CurrencyFixtures
 
 pytestmark = pytest.mark.django_db
@@ -99,11 +99,9 @@ class TestMakeTransfer(CurrencyFixtures):
         assert response.status_code == 404
 
     @pytest.mark.finance
-    def test_make_transfer_fail_same_account_operation(
-        self, auth_user_client, iswift_account_factory
-    ):
+    def test_make_transfer_fail_same_account_operation(self, auth_user_client):
         user, client = auth_user_client
-        sender_acc = iswift_account_factory(user=user)
+        sender_acc = iSwiftAccount.objects.get(user=user)
         data = {
             "recipients": [{"recipient": sender_acc.user.uid, "amount": 1000}],
             "iswift_account": sender_acc.uid,
