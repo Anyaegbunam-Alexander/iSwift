@@ -21,7 +21,7 @@ from accounts.serializers.input import (
 )
 from accounts.serializers.output import UserLoginSerializer, UserSerializer
 from core.authenticator import authenticate_user
-from core.exceptions import BadRequestException
+from core.exceptions import BadRequest
 from core.helpers import get_object_or_404, response_dict
 from core.mixins import AuthenticatedOnlyMixin, UnauthenticatedOnlyMixin
 from core.otp import OTPGenerator, OTPVerifier
@@ -104,7 +104,7 @@ class VerifyOTPView(UnauthenticatedOnlyMixin, APIView):
                     response_dict("Successfully verified phone number"),
                     status=status.HTTP_200_OK,
                 )
-            raise BadRequestException("Unable to verify otp please try again")
+            raise BadRequest("Unable to verify otp please try again")
 
 
 class RegenerateOTPViewSignup(UnauthenticatedOnlyMixin, APIView):
@@ -162,7 +162,7 @@ class VerifyOTPPasswordReset(UnauthenticatedOnlyMixin, APIView):
                 token = password_reset_token.make_token(user)
                 data = {"uid": user.uid, "token": token}
                 return Response(data, status=status.HTTP_200_OK)
-            raise BadRequestException("Unable to verify otp please try again")
+            raise BadRequest("Unable to verify otp please try again")
 
 
 class ResetPasswordFromOTP(UnauthenticatedOnlyMixin, APIView):
@@ -178,7 +178,7 @@ class ResetPasswordFromOTP(UnauthenticatedOnlyMixin, APIView):
         user = get_object_or_404(User, uid=uid)
 
         if not password_reset_token.check_token(user, token):
-            raise BadRequestException("Invalid or expired token")
+            raise BadRequest("Invalid or expired token")
 
         password_reset_serializer = PasswordResetSerializer(data=data)
         if password_reset_serializer.is_valid(raise_exception=True):
@@ -198,7 +198,7 @@ class AuthUserResetPasswordView(AuthenticatedOnlyMixin, APIView):
             current_password = serializer.validated_data["current_password"]
             user = authenticate(request, password=current_password, email=request.user.email)
             if user is None:
-                raise BadRequestException("Invalid current password")
+                raise BadRequest("Invalid current password")
 
             new_password = serializer.validated_data["new_password"]
             user.set_password(new_password)
