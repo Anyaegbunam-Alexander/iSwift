@@ -1,11 +1,11 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.db import models, transaction
 from django.db.models import Q
 from django_extensions.db.models import ActivatorModel
 
 from accounts.models import User
-from core.exceptions import SameAccountOperation
+from core.exceptions import InsufficientFunds, SameAccountOperation
 from core.feilds import MoneyField
 from core.model_abstracts import Model
 
@@ -39,6 +39,16 @@ class Currency(Model, ActivatorModel):
             # TODO raise error here?
             rate = None, None
 
+    def convert_currency(self, target: "Currency", amount: Decimal) -> Decimal:
+        if not isinstance(amount, Decimal):
+            try:
+                amount = Decimal(amount)
+            except InvalidOperation as e:
+                raise e
+
+        rate = self.get_conversion_rate(target)[0]
+        return (amount * rate).__round__(2)
+
 
 class ConversionRate(Model):
     base_currency = models.ForeignKey(
@@ -64,6 +74,9 @@ class iSwiftAccount(Model, ActivatorModel):
     @transaction.atomic
     def record_transfer(self, recipients: list, description: str):
         total_amount = sum(re["amount"] for re in recipients)
+        if Decimal(total_amount) > self.balance:
+            raise InsufficientFunds()
+
         debit = DebitTransaction(
             description=description,
             iswift_account=self,
@@ -100,9 +113,14 @@ class iSwiftAccount(Model, ActivatorModel):
         if self == debit_transaction.iswift_account:
             raise SameAccountOperation()
 
-        amount_received = (
-            debit_transaction.iswift_account.currency.get_conversion_rate(target=self.currency)[0]
-            * amount
+        if not isinstance(amount, Decimal):
+            try:
+                amount = Decimal(amount)
+            except InvalidOperation as e:
+                raise e
+
+        amount_received = debit_transaction.iswift_account.currency.convert_currency(
+            self.currency, amount
         )
 
         credit = CreditTransaction(
